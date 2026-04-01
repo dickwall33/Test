@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TamaPals - Virtual Pet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="shell">
+        <div id="screen-bezel">
+            <div id="screen">
+                <!-- Title Screen -->
+                <div id="title-screen" class="screen-view active">
+                    <div id="title-art">
+                        <pre id="egg-art"></pre>
+                    </div>
+                    <h1 class="pixel-title">TamaPals</h1>
+                    <p class="blink-text">PRESS START</p>
+                    <button id="start-btn" class="shell-btn">START</button>
+                </div>
+
+                <!-- Creature Selection -->
+                <div id="select-screen" class="screen-view">
+                    <h2 class="pixel-subtitle">Choose Your Pal!</h2>
+                    <div id="creature-carousel">
+                        <button id="prev-creature" class="nav-btn">&lt;</button>
+                        <div id="creature-preview">
+                            <pre id="preview-art"></pre>
+                            <p id="creature-name"></p>
+                            <p id="creature-desc"></p>
+                        </div>
+                        <button id="next-creature" class="nav-btn">&gt;</button>
+                    </div>
+                    <button id="choose-btn" class="shell-btn">ADOPT!</button>
+                </div>
+
+                <!-- Main Game Screen -->
+                <div id="game-screen" class="screen-view">
+                    <div id="status-bar">
+                        <span id="pet-name-display"></span>
+                        <span id="age-display">Age: 0</span>
+                    </div>
+                    <div id="pet-area">
+                        <pre id="pet-art"></pre>
+                        <div id="mood-indicator"></div>
+                        <div id="action-effect" class="hidden"></div>
+                        <div id="poop-area"></div>
+                        <div id="zzz" class="hidden">Z z z</div>
+                    </div>
+                    <div id="stats-panel">
+                        <div class="stat-row">
+                            <span class="stat-icon">&#9829;</span>
+                            <span class="stat-label">Hunger</span>
+                            <div class="stat-bar"><div id="hunger-bar" class="stat-fill"></div></div>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon">&#9786;</span>
+                            <span class="stat-label">Happy</span>
+                            <div class="stat-bar"><div id="happy-bar" class="stat-fill"></div></div>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon">&#9889;</span>
+                            <span class="stat-label">Energy</span>
+                            <div class="stat-bar"><div id="energy-bar" class="stat-fill"></div></div>
+                        </div>
+                        <div class="stat-row">
+                            <span class="stat-icon">&#10084;</span>
+                            <span class="stat-label">Health</span>
+                            <div class="stat-bar"><div id="health-bar" class="stat-fill"></div></div>
+                        </div>
+                    </div>
+                    <div id="action-buttons">
+                        <button class="action-btn" data-action="feed" title="Feed">
+                            <span class="btn-icon">&#127834;</span>
+                            <span class="btn-label">Feed</span>
+                        </button>
+                        <button class="action-btn" data-action="play" title="Play">
+                            <span class="btn-icon">&#9917;</span>
+                            <span class="btn-label">Play</span>
+                        </button>
+                        <button class="action-btn" data-action="sleep" title="Sleep">
+                            <span class="btn-icon">&#127769;</span>
+                            <span class="btn-label">Sleep</span>
+                        </button>
+                        <button class="action-btn" data-action="clean" title="Clean">
+                            <span class="btn-icon">&#128703;</span>
+                            <span class="btn-label">Clean</span>
+                        </button>
+                        <button class="action-btn" data-action="heal" title="Medicine">
+                            <span class="btn-icon">&#128138;</span>
+                            <span class="btn-label">Heal</span>
+                        </button>
+                        <button class="action-btn" data-action="pet" title="Pet">
+                            <span class="btn-icon">&#128400;</span>
+                            <span class="btn-label">Pet</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div id="gameover-screen" class="screen-view">
+                    <pre id="grave-art"></pre>
+                    <p id="gameover-msg"></p>
+                    <p id="final-age"></p>
+                    <button id="restart-btn" class="shell-btn">TRY AGAIN</button>
+                </div>
+
+                <!-- Evolution Screen -->
+                <div id="evolve-screen" class="screen-view">
+                    <h2 class="pixel-subtitle">EVOLUTION!</h2>
+                    <pre id="evolve-art" class="evolve-flash"></pre>
+                    <p id="evolve-msg"></p>
+                    <button id="evolve-ok-btn" class="shell-btn">WOW!</button>
+                </div>
+            </div>
+        </div>
+        <!-- Decorative buttons on the shell -->
+        <div id="shell-controls">
+            <div class="shell-dot"></div>
+            <div class="shell-dot"></div>
+            <div class="shell-dot"></div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
