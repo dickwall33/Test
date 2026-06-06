@@ -3,125 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TamaPals - Virtual Pet</title>
+    <title>Cat Lab — Design & Raise Your Own Cat</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="shell">
-        <div id="screen-bezel">
-            <div id="screen">
-                <!-- Title Screen -->
-                <div id="title-screen" class="screen-view active">
-                    <div id="title-art">
-                        <pre id="egg-art"></pre>
-                    </div>
-                    <h1 class="pixel-title">TamaPals</h1>
-                    <p class="blink-text">PRESS START</p>
-                    <button id="start-btn" class="shell-btn">START</button>
-                </div>
+    <div id="bg-particles"></div>
 
-                <!-- Creature Selection -->
-                <div id="select-screen" class="screen-view">
-                    <h2 class="pixel-subtitle">Choose Your Pal!</h2>
-                    <div id="creature-carousel">
-                        <button id="prev-creature" class="nav-btn">&lt;</button>
-                        <div id="creature-preview">
-                            <pre id="preview-art"></pre>
-                            <p id="creature-name"></p>
-                            <p id="creature-desc"></p>
-                        </div>
-                        <button id="next-creature" class="nav-btn">&gt;</button>
-                    </div>
-                    <button id="choose-btn" class="shell-btn">ADOPT!</button>
+    <main id="app">
+        <!-- ============ TITLE / LAB ENTRANCE ============ -->
+        <section id="title-screen" class="screen active">
+            <div class="title-inner">
+                <div class="logo-cat" id="logo-cat"></div>
+                <h1 class="logo">
+                    <span class="logo-cat-word">CAT</span><span class="logo-lab-word">LAB</span>
+                </h1>
+                <p class="tagline">Design a cat that has never existed.<br>Then raise it.</p>
+                <div class="title-buttons">
+                    <button id="continue-btn" class="btn btn-primary hidden">Continue with <span id="continue-name"></span></button>
+                    <button id="new-btn" class="btn btn-ghost">Create a New Cat</button>
                 </div>
+                <p class="credits">A laboratory for impossible felines</p>
+            </div>
+        </section>
 
-                <!-- Main Game Screen -->
-                <div id="game-screen" class="screen-view">
-                    <div id="status-bar">
-                        <span id="pet-name-display"></span>
-                        <span id="age-display">Age: 0</span>
+        <!-- ============ CREATOR ============ -->
+        <section id="creator-screen" class="screen">
+            <div class="creator-grid">
+                <!-- Live preview -->
+                <div class="preview-panel">
+                    <div class="preview-stage">
+                        <div class="cat-render" id="creator-cat"></div>
                     </div>
-                    <div id="pet-area">
-                        <pre id="pet-art"></pre>
-                        <div id="mood-indicator"></div>
-                        <div id="action-effect" class="hidden"></div>
-                        <div id="poop-area"></div>
-                        <div id="zzz" class="hidden">Z z z</div>
+                    <div class="preview-name">
+                        <input type="text" id="cat-name-input" maxlength="16" placeholder="Name your cat…" autocomplete="off">
                     </div>
-                    <div id="stats-panel">
-                        <div class="stat-row">
-                            <span class="stat-icon">&#9829;</span>
-                            <span class="stat-label">Hunger</span>
-                            <div class="stat-bar"><div id="hunger-bar" class="stat-fill"></div></div>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-icon">&#9786;</span>
-                            <span class="stat-label">Happy</span>
-                            <div class="stat-bar"><div id="happy-bar" class="stat-fill"></div></div>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-icon">&#9889;</span>
-                            <span class="stat-label">Energy</span>
-                            <div class="stat-bar"><div id="energy-bar" class="stat-fill"></div></div>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-icon">&#10084;</span>
-                            <span class="stat-label">Health</span>
-                            <div class="stat-bar"><div id="health-bar" class="stat-fill"></div></div>
-                        </div>
-                    </div>
-                    <div id="action-buttons">
-                        <button class="action-btn" data-action="feed" title="Feed">
-                            <span class="btn-icon">&#127834;</span>
-                            <span class="btn-label">Feed</span>
-                        </button>
-                        <button class="action-btn" data-action="play" title="Play">
-                            <span class="btn-icon">&#9917;</span>
-                            <span class="btn-label">Play</span>
-                        </button>
-                        <button class="action-btn" data-action="sleep" title="Sleep">
-                            <span class="btn-icon">&#127769;</span>
-                            <span class="btn-label">Sleep</span>
-                        </button>
-                        <button class="action-btn" data-action="clean" title="Clean">
-                            <span class="btn-icon">&#128703;</span>
-                            <span class="btn-label">Clean</span>
-                        </button>
-                        <button class="action-btn" data-action="heal" title="Medicine">
-                            <span class="btn-icon">&#128138;</span>
-                            <span class="btn-label">Heal</span>
-                        </button>
-                        <button class="action-btn" data-action="pet" title="Pet">
-                            <span class="btn-icon">&#128400;</span>
-                            <span class="btn-label">Pet</span>
-                        </button>
+                    <p class="preview-summary" id="preview-summary"></p>
+                    <div class="preview-actions">
+                        <button id="randomize-btn" class="btn btn-ghost btn-sm">🎲 Surprise me</button>
+                        <button id="bring-to-life-btn" class="btn btn-primary btn-sm">Bring to Life ✨</button>
                     </div>
                 </div>
 
-                <!-- Game Over Screen -->
-                <div id="gameover-screen" class="screen-view">
-                    <pre id="grave-art"></pre>
-                    <p id="gameover-msg"></p>
-                    <p id="final-age"></p>
-                    <button id="restart-btn" class="shell-btn">TRY AGAIN</button>
-                </div>
+                <!-- Controls -->
+                <div class="controls-panel">
+                    <header class="controls-header">
+                        <h2>The Creator</h2>
+                        <button id="back-to-title" class="link-btn">← Lab</button>
+                    </header>
 
-                <!-- Evolution Screen -->
-                <div id="evolve-screen" class="screen-view">
-                    <h2 class="pixel-subtitle">EVOLUTION!</h2>
-                    <pre id="evolve-art" class="evolve-flash"></pre>
-                    <p id="evolve-msg"></p>
-                    <button id="evolve-ok-btn" class="shell-btn">WOW!</button>
+                    <div class="control-group" data-control="type">
+                        <label class="control-label">Species Type</label>
+                        <div class="chip-row" id="type-row"></div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Fur Pattern</label>
+                        <div class="chip-row" id="pattern-row"></div>
+                    </div>
+
+                    <div class="control-group split">
+                        <div>
+                            <label class="control-label">Fur Colour</label>
+                            <div class="swatch-row" id="fur-swatches"></div>
+                            <input type="color" id="fur-custom" class="color-input" value="#ff9ad1">
+                        </div>
+                        <div>
+                            <label class="control-label">Accent Colour</label>
+                            <div class="swatch-row" id="accent-swatches"></div>
+                            <input type="color" id="accent-custom" class="color-input" value="#5b3a8f">
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Eye Colour</label>
+                        <div class="swatch-row" id="eye-swatches"></div>
+                    </div>
+
+                    <div class="control-group split">
+                        <div>
+                            <label class="control-label">Size</label>
+                            <div class="chip-row col" id="size-row"></div>
+                        </div>
+                        <div>
+                            <label class="control-label">Age</label>
+                            <div class="chip-row col" id="age-row"></div>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Personality</label>
+                        <div class="chip-row" id="personality-row"></div>
+                        <p class="control-hint" id="personality-hint"></p>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Favourite Diet</label>
+                        <div class="chip-row" id="diet-row"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <!-- Decorative buttons on the shell -->
-        <div id="shell-controls">
-            <div class="shell-dot"></div>
-            <div class="shell-dot"></div>
-            <div class="shell-dot"></div>
-        </div>
-    </div>
+        </section>
+
+        <!-- ============ NURSERY / CARE ============ -->
+        <section id="care-screen" class="screen">
+            <div class="care-grid">
+                <aside class="care-info">
+                    <div class="info-card">
+                        <h3 id="care-name">—</h3>
+                        <p class="info-line" id="care-traits">—</p>
+                        <div class="age-badge"><span id="care-age-label">Kitten</span> · <span id="care-days">Day 1</span></div>
+                    </div>
+                    <div class="mood-card">
+                        <div class="mood-emoji" id="mood-emoji">😺</div>
+                        <div class="mood-text" id="mood-text">Content</div>
+                    </div>
+                    <button id="new-cat-btn" class="btn btn-ghost btn-sm full">⚗️ Back to the Lab</button>
+                </aside>
+
+                <div class="care-stage-wrap">
+                    <div class="care-stage" id="care-stage">
+                        <div class="stage-floor"></div>
+                        <div class="cat-render" id="care-cat"></div>
+                        <div class="particle-layer" id="particle-layer"></div>
+                        <div class="speech-bubble hidden" id="speech-bubble"></div>
+                    </div>
+                </div>
+
+                <aside class="care-stats">
+                    <div class="stat" data-stat="hunger">
+                        <div class="stat-top"><span class="stat-emoji">🍽️</span><span class="stat-name">Fullness</span><span class="stat-num" id="hunger-num">100</span></div>
+                        <div class="stat-track"><div class="stat-bar" id="hunger-bar"></div></div>
+                    </div>
+                    <div class="stat" data-stat="happiness">
+                        <div class="stat-top"><span class="stat-emoji">💖</span><span class="stat-name">Happiness</span><span class="stat-num" id="happiness-num">100</span></div>
+                        <div class="stat-track"><div class="stat-bar" id="happiness-bar"></div></div>
+                    </div>
+                    <div class="stat" data-stat="energy">
+                        <div class="stat-top"><span class="stat-emoji">⚡</span><span class="stat-name">Energy</span><span class="stat-num" id="energy-num">100</span></div>
+                        <div class="stat-track"><div class="stat-bar" id="energy-bar"></div></div>
+                    </div>
+                    <div class="stat" data-stat="cleanliness">
+                        <div class="stat-top"><span class="stat-emoji">🛁</span><span class="stat-name">Cleanliness</span><span class="stat-num" id="cleanliness-num">100</span></div>
+                        <div class="stat-track"><div class="stat-bar" id="cleanliness-bar"></div></div>
+                    </div>
+                    <div class="stat" data-stat="bond">
+                        <div class="stat-top"><span class="stat-emoji">🔗</span><span class="stat-name">Bond</span><span class="stat-num" id="bond-num">0</span></div>
+                        <div class="stat-track"><div class="stat-bar" id="bond-bar"></div></div>
+                    </div>
+                </aside>
+            </div>
+
+            <div class="action-bar" id="action-bar">
+                <button class="care-action" data-action="feed"><span class="ca-icon" id="feed-icon">🐟</span><span class="ca-label">Feed</span></button>
+                <button class="care-action" data-action="play"><span class="ca-icon">🧶</span><span class="ca-label">Play</span></button>
+                <button class="care-action" data-action="pet"><span class="ca-icon">🤚</span><span class="ca-label">Pet</span></button>
+                <button class="care-action" data-action="groom"><span class="ca-icon">🪮</span><span class="ca-label">Groom</span></button>
+                <button class="care-action" data-action="treat"><span class="ca-icon">🍬</span><span class="ca-label">Treat</span></button>
+                <button class="care-action" data-action="sleep"><span class="ca-icon" id="sleep-icon">🌙</span><span class="ca-label" id="sleep-label">Sleep</span></button>
+            </div>
+        </section>
+    </main>
 
     <script src="game.js"></script>
 </body>
