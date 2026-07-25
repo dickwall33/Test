@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1b1140">
+<title>Critter Brain Reader 🐾</title>
+<style>
+  :root{
+    --dog:#ff8a3d; --dog2:#ffb347;
+    --cat:#8a6bff; --cat2:#b79bff;
+    --ink:#1b1140; --paper:#fff8ef;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:"Baloo 2",system-ui,"Segoe UI",Roboto,sans-serif;}
+  body{
+    background:#0f0a26;color:var(--paper);
+    display:flex;flex-direction:column;height:100dvh;user-select:none;
+  }
+
+  /* ---- Camera / stage ---- */
+  #stage{position:relative;flex:1;overflow:hidden;background:radial-gradient(circle at 50% 30%,#2a1c5e,#0f0a26);}
+  #cam{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(1);}
+  #stage.noCam #cam{display:none;}
+  #vignette{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(circle at 50% 42%,transparent 40%,rgba(10,6,30,.55) 100%);}
+
+  /* reticle for "aiming" */
+  #reticle{position:absolute;top:50%;left:50%;width:min(62vw,300px);height:min(62vw,300px);
+    transform:translate(-50%,-58%);border:3px dashed rgba(255,255,255,.55);border-radius:28px;
+    pointer-events:none;transition:opacity .3s;}
+  #reticle::before,#reticle::after{content:"";position:absolute;width:22px;height:22px;border:3px solid #fff;}
+  #reticle::before{top:-3px;left:-3px;border-right:0;border-bottom:0;border-radius:12px 0 0 0;}
+  #reticle::after{bottom:-3px;right:-3px;border-left:0;border-top:0;border-radius:0 0 12px 0;}
+  #hint{position:absolute;top:calc(50% + 30vw);left:50%;transform:translate(-50%,10px);
+    font-weight:700;font-size:clamp(15px,4.2vw,20px);text-align:center;width:90%;
+    text-shadow:0 2px 8px rgba(0,0,0,.7);opacity:.95;}
+
+  header{position:absolute;top:0;left:0;right:0;padding:14px 16px 8px;
+    display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(#0f0a26cc,transparent);pointer-events:none;}
+  #logo{font-weight:800;font-size:clamp(18px,5vw,24px);letter-spacing:.3px;
+    text-shadow:0 2px 6px rgba(0,0,0,.6);}
+  #logo .paw{filter:drop-shadow(0 2px 3px rgba(0,0,0,.4));}
+  #count{font-weight:800;font-size:14px;background:#ffffff22;border:1px solid #ffffff30;
+    padding:6px 12px;border-radius:999px;backdrop-filter:blur(4px);}
+
+  /* ---- Scanning overlay ---- */
+  #scan{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    background:rgba(10,6,30,.62);backdrop-filter:blur(3px);z-index:5;}
+  #scan.on{display:flex;}
+  .brain{font-size:min(30vw,150px);animation:pulse 1s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+  #scanText{margin-top:6px;font-weight:800;font-size:clamp(18px,5.5vw,26px);text-align:center;padding:0 20px;}
+  .bar{margin-top:18px;width:min(70vw,320px);height:14px;border-radius:999px;background:#ffffff22;overflow:hidden;}
+  .bar>div{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#ff8a3d,#8a6bff);}
+
+  /* ---- Speech bubble reveal ---- */
+  #reveal{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    padding:22px;z-index:6;}
+  #reveal.on{display:flex;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  #bubble{position:relative;max-width:560px;width:100%;background:var(--paper);color:var(--ink);
+    border-radius:30px;padding:28px 24px 26px;box-shadow:0 18px 50px rgba(0,0,0,.5);
+    animation:pop .35s cubic-bezier(.2,1.4,.4,1);border:4px solid #ffffff;}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  #bubble.dog{border-color:var(--dog);} #bubble.cat{border-color:var(--cat);}
+  #bubble::after{content:"";position:absolute;bottom:-22px;left:50%;transform:translateX(-50%);
+    border:16px solid transparent;border-top-color:var(--paper);border-bottom:0;}
+  #face{font-size:min(22vw,110px);line-height:1;text-align:center;margin-bottom:4px;
+    animation:bob 1.4s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(2deg)}}
+  #noise{text-align:center;font-weight:800;font-size:clamp(20px,6vw,30px);color:#c86a1e;margin-bottom:6px;}
+  #bubble.cat #noise{color:#6b4fd6;}
+  #thought{text-align:center;font-weight:700;font-size:clamp(22px,6.6vw,36px);line-height:1.18;color:var(--ink);}
+  #again{margin-top:20px;font-weight:800;font-size:16px;color:#ffffffcc;text-shadow:0 1px 4px #000;
+    background:#ffffff22;border:1px solid #ffffff40;padding:10px 18px;border-radius:999px;}
+
+  /* speaker button inside bubble */
+  #replay{position:absolute;top:12px;right:14px;font-size:24px;background:none;border:0;cursor:pointer;opacity:.6;}
+
+  /* ---- Controls ---- */
+  #controls{display:flex;gap:14px;padding:16px 16px calc(16px + env(safe-area-inset-bottom));background:#0f0a26;}
+  .big{flex:1;border:0;border-radius:26px;padding:18px 0;font-family:inherit;font-weight:800;
+    font-size:clamp(20px,6vw,28px);color:#fff;cursor:pointer;position:relative;
+    box-shadow:0 8px 0 rgba(0,0,0,.35),0 12px 24px rgba(0,0,0,.4);transition:transform .06s,box-shadow .06s;}
+  .big:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
+  #dogBtn{background:linear-gradient(180deg,var(--dog2),var(--dog));}
+  #catBtn{background:linear-gradient(180deg,var(--cat2),var(--cat));}
+  .big .emo{font-size:1.3em;display:block;line-height:1;}
+  .big .lbl{display:block;letter-spacing:1px;}
+  .big[disabled]{filter:grayscale(.4) brightness(.8);}
+
+  #camPrompt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;text-align:center;padding:24px;z-index:4;}
+  #camPrompt.hide{display:none;}
+  #camPrompt .big{max-width:280px;}
+  #camPrompt p{font-weight:700;opacity:.85;max-width:340px;line-height:1.4;}
+  .tinyNote{font-size:12px;opacity:.6;font-weight:600;padding:0 16px 8px;text-align:center;}
+</style>
+</head>
+<body>
+  <div id="stage" class="noCam">
+    <video id="cam" playsinline muted autoplay></video>
+    <div id="vignette"></div>
+    <div id="reticle"></div>
+    <div id="hint">Point at a real dog or cat 🐕🐈<br>then tap their button below!</div>
+
+    <header>
+      <div id="logo"><span class="paw">🐾</span> Critter Brain Reader</div>
+      <div id="count">0 read</div>
+    </header>
+
+    <!-- camera permission prompt -->
+    <div id="camPrompt">
+      <div style="font-size:64px">🔮</div>
+      <p>Turn on the camera to aim at your pet — or just play without it!</p>
+      <button class="big" id="camOn" style="background:linear-gradient(180deg,#67e0a3,#26b673)">
+        <span class="emo">📷</span><span class="lbl">TURN ON CAMERA</span>
+      </button>
+      <button id="skipCam" style="background:none;border:0;color:#fff;opacity:.7;font-weight:700;font-size:15px;text-decoration:underline">Play without camera</button>
+    </div>
+
+    <!-- scanning -->
+    <div id="scan">
+      <div class="brain">🧠</div>
+      <div id="scanText">Reading brainwaves…</div>
+      <div class="bar"><div id="barFill"></div></div>
+    </div>
+
+    <!-- reveal -->
+    <div id="reveal">
+      <div id="bubble">
+        <button id="replay" title="Read again">🔊</button>
+        <div id="face">🐶</div>
+        <div id="noise">Woof!</div>
+        <div id="thought"></div>
+      </div>
+      <div id="again">👆 Tap DOG or CAT to read another mind</div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="big" id="dogBtn"><span class="emo">🐶</span><span class="lbl">DOG</span></button>
+    <button class="big" id="catBtn"><span class="emo">🐱</span><span class="lbl">CAT</span></button>
+  </div>
+  <div class="tinyNote">Aim at your pet — or tap when they bark or meow. It's just for giggles! 🐾</div>
+
+<script>
+/* ============================================================
+   Critter Brain Reader
+   A silly pet-thought translator for kids 8+.
+   Point the phone at a dog or cat, tap the button, and it
+   "reads" a funny thought aloud in a dog or cat voice.
+   ============================================================ */
+
+/* ---------- The thoughts (big pools so a 5–10 min session won't repeat) ---------- */
+const DOG_THOUGHTS = [
+  "Is that a squirrel? IS THAT A SQUIRREL?!",
+  "I would die for you. Also, is that bacon?",
+  "You've been gone for 8 hours... or 4 seconds. Same thing. I MISSED YOU.",
+  "The mailman is back. This is my Roman Empire.",
+  "I ate something in the yard. I will not be telling you what.",
+  "Ball. Ball ball ball. BALL. Please. The ball.",
+  "I'm not lying on your clean laundry. I'm GUARDING it. With my whole body.",
+  "The vacuum has returned. Prepare the barking.",
+  "I have no idea why I'm barking but I fully commit.",
+  "You said 'walk' from three rooms away. I heard everything.",
+  "That other dog was TOTALLY talking about me.",
+  "I rolled in something amazing. You're welcome for the smell.",
+  "Every day is the best day I have ever had in my entire life.",
+  "If it fits in my mouth, it is technically a snack.",
+  "I don't know what a Tuesday is but I love you on it.",
+  "The doorbell rang on the TV. This is a national emergency.",
+  "I buried a treasure in the couch. It was a chip. I forgot where.",
+  "Zoomies incoming in 3… 2… I'm already going.",
+  "My tail is up to something and even I don't know what.",
+  "You dropped that on purpose. You're a legend. Thank you.",
+  "I could catch that squirrel. I choose not to. Every time.",
+  "The cat looked at me. I have been challenged.",
+  "Belly rubs are a human right. I looked it up. With my paws.",
+  "I'm a very good boy and I know exactly zero commands.",
+  "Wait, are we going to the vet? …Nope, false alarm, LOVE YOU.",
+  "I heard a chip bag open from outer space.",
+  "That's my human. Yes. The whole one. Mine.",
+  "I sniffed 47 things on that walk and I remember all of them.",
+  "Sometimes I bark at nothing to keep it away. You're welcome.",
+  "The couch is lava and also mine.",
+  "I would like a treat for existing, please.",
+  "Someone new is here and I must smell all of them immediately.",
+  "I chased my tail and lost. Rematch tomorrow.",
+  "You're on the phone. Are you talking about treats? Are you?",
+  "I forgot you were in the bathroom and now we are reunited!",
+  "The wind moved a leaf. I have declared war.",
+  "I'm going to lick your face until you understand how great you are.",
+  "New smell alert. New smell alert. This is not a drill.",
+  "I do not need the whole bed but I will take the whole bed.",
+  "That dog on the walk is my new best friend forever probably.",
+  "I heard the fridge open. I am legally required to appear.",
+  "My favorite toy is the one you just threw away.",
+  "You sneezed. Are you okay? Do you need me to sit on you?",
+  "I have been SO brave about this thunderstorm (I am under the table).",
+  "Nap number six of the day and honestly I've earned it.",
+  "I stole a sock. It is now my most treasured possession.",
+  "The garbage truck. My oldest enemy. We meet again.",
+  "I want to go outside. Now I want to come inside. Now outside.",
+  "You're eating. I will simply stare until you feel it.",
+  "I don't remember why I ran in here but here I am, thriving.",
+  "Every stick is THE stick.",
+  "I heard my name. Was it good? It was good. I can tell.",
+  "I protected the house from the delivery box all day.",
+  "Is this water bowl new? It tastes like adventure.",
+  "The other dogs at the park did NOT respect the ball rules.",
+  "I love car rides. Where are we going? Everywhere? PERFECT.",
+  "I made a friend. It was a shoe. We're very close now.",
+  "Someone said 'good boy' in a movie and I felt that.",
+  "The squirrel has an agenda and I am the only one who sees it.",
+  "I would like to alert you that a bird exists outside.",
+  "I napped so hard I forgot my own name for a second.",
+  "You put your shoes on. Are we going? ARE WE GOING?",
+  "I brought you my slobbery ball because you looked like you needed it.",
+  "That pillow was too fluffy. I have fixed it. It is now flat.",
+  "I love this blanket. I love this floor. I love this shoe. I love YOU.",
+  "The neighbor's cat is plotting and I'm keeping notes.",
+  "I heard a plastic crinkle and my ancestors woke up inside me.",
+  "I'm not begging, I'm just extremely nearby your sandwich.",
+  "I dug a hole. I don't have a reason. It's just a good hole.",
+  "You laughed. I don't know why but I'm wagging about it.",
+];
+
+const CAT_THOUGHTS = [
+  "I knocked it off the table. I looked you dead in the eye. No regrets.",
+  "You may pet me for exactly three strokes. The fourth one, I bite.",
+  "I have decided this cardboard box is now my entire personality.",
+  "It is 3 AM. Time to run across your face at full speed.",
+  "I could catch that red dot. I'm choosing to let it live. For now.",
+  "Yes, I have a whole bed. No, I will sleep on your keyboard.",
+  "I meowed. Feed me. I know I have food. Feed me a NEW food.",
+  "That was your favorite mug. Was. Anyway.",
+  "I love you. Do not tell anyone. I have a reputation.",
+  "I sat on the one piece of paper you needed. This is my job now.",
+  "The vet? I remember the vet. I have not forgotten. I never forget.",
+  "I knocked and knocked but the closed door remains my nemesis.",
+  "You bought me a $40 toy. I am playing with the receipt.",
+  "I am not stuck. I chose to sit in this bag. It is my decision.",
+  "The dog thinks we're friends. The dog is an optimist.",
+  "I brought you a gift. It's a leaf. You're welcome. Cherish it.",
+  "I will now stare at the wall for 20 minutes. Do not ask why.",
+  "You were typing. I sat on the keyboard. Now we both live here.",
+  "I knocked the pen off the desk. Justice has been served.",
+  "It's my birthday. It's always my birthday. Act accordingly.",
+  "I heard the can opener from three dimensions away.",
+  "This sunbeam is booked. Come back in four hours.",
+  "I meow at the door to go out. I meow at the door to come in. Balance.",
+  "You cleaned my litter box. Bold of you to think I'll thank you.",
+  "I knocked your glass off the counter as a scientific experiment. It fell.",
+  "I have been staring at you sleep. For science. And menace.",
+  "The vacuum lives. I do not consent to the vacuum.",
+  "I love this box. I do not fit in this box. I am in this box.",
+  "You call it 'the good couch.' I call it 'my scratching post.'",
+  "I will sit just out of reach so you know I'm here on purpose.",
+  "I demand attention. You give attention. I leave. This is love.",
+  "I hunted a bug for two hours. I let it go. Rich people problems.",
+  "That's not your seat anymore. I've warmed it. It's mine now.",
+  "The laser pointer disrespected me and then vanished. Cowardly.",
+  "I purr so you think I'm nice. It's working.",
+  "You looked away for one second. Your food is now MY food.",
+  "I fit perfectly in this tiny bowl and no one can tell me otherwise.",
+  "Curtains are just a ladder with an attitude problem.",
+  "I knocked something over in the other room. Come find out what.",
+  "You said 'no.' I heard 'do it slower and with eye contact.'",
+  "The bird outside is a live TV channel and I'm binge-watching.",
+  "I stepped in your snack. It's mine now. Those are the rules.",
+  "I'm ignoring you. This is quality time. You're welcome.",
+  "I will meow one (1) time at 4 AM to make sure you're awake.",
+  "This blanket has my exact body indent. Do not adjust it.",
+  "I knocked a coaster off just to hear the little clatter. Music.",
+  "You have guests. I will hide, then judge them from a high shelf.",
+  "That houseplant looked at me funny so I ate a leaf.",
+  "I don't chase the toy. The toy chases my patience and loses.",
+  "I sat on your chest so you'd know exactly who's in charge.",
+  "The water in the glass tastes better than the water in my bowl. Rules.",
+  "I have selected your gym bag as my new throne. It is decided.",
+  "You bought a bed. I sleep in the box it came in. Correct.",
+  "I made biscuits on your stomach. Consider yourself blessed.",
+  "The other cat outside is on MY windowsill in MY view. Outrageous.",
+  "I heard you open a bag. Any bag. I'm on my way.",
+  "I knocked, therefore it fell, therefore it was destiny.",
+  "I love you most when you're asleep and can't try to hug me.",
+  "You put out fresh food. I sniffed it and walked away. Menu declined.",
+  "I am a fierce hunter. Of the little cap from the milk jug.",
+  "Do not look at me while I fall off this shelf. It never happened.",
+  "The zoomies have chosen me. It is 2 AM. Farewell.",
+  "I'm sitting on your laptop because it's warm and you're distracted.",
+  "That string is the most dangerous animal I have ever fought.",
+  "I let you live here. Never forget that.",
+  "I stared into the corner. Something was there. Now it's gone. You're welcome.",
+  "I will knock exactly one item off per day. Today's item: your phone.",
+  "You closed the laptop. Now it's a bed. Thank you for the upgrade.",
+];
+
+/* Barks & meows — a random sound to open the reveal, spoken + shown */
+const BARKS = ["Woof!","Bork!","Arf arf!","Woof woof!","Bark!","Grrr-ruff!","Yip!","Boof!","AWOOO!","Ruff!"];
+const MEOWS = ["Meow.","Mrrrow?","Mew!","Meeeow…","Prrrp?","Mrow.","Nyaa~","Meow meow.","Mrrp!","Reeeow!"];
+
+const SCAN_LINES = [
+  "Reading brainwaves…","Decoding tail wags…","Translating whiskers…","Sniffing out feelings…",
+  "Downloading pet thoughts…","Tuning the fur-quency…","Analyzing ear twitches…","Buffering good boy energy…",
+  "Consulting the treat archives…","Measuring zoomie levels…","Detecting mischief…","Reading the room (and the cat)…"
+];
+
+/* ---------- No-repeat shuffle bags ---------- */
+function makeBag(items){
+  let bag=[];
+  return function(){
+    if(bag.length===0){
+      bag=items.slice();
+      for(let i=bag.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}
+    }
+    return bag.pop();
+  };
+}
+const dogBag=makeBag(DOG_THOUGHTS);
+const catBag=makeBag(CAT_THOUGHTS);
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+
+/* ---------- Elements ---------- */
+const stage=document.getElementById('stage');
+const cam=document.getElementById('cam');
+const camPrompt=document.getElementById('camPrompt');
+const scan=document.getElementById('scan');
+const scanText=document.getElementById('scanText');
+const barFill=document.getElementById('barFill');
+const reveal=document.getElementById('reveal');
+const bubble=document.getElementById('bubble');
+const faceEl=document.getElementById('face');
+const noiseEl=document.getElementById('noise');
+const thoughtEl=document.getElementById('thought');
+const replayBtn=document.getElementById('replay');
+const dogBtn=document.getElementById('dogBtn');
+const catBtn=document.getElementById('catBtn');
+const countEl=document.getElementById('count');
+const hint=document.getElementById('hint');
+
+let count=0;
+let busy=false;
+let lastSpeak=null;
+
+/* ---------- Camera ---------- */
+async function startCamera(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'}},audio:false
+    });
+    cam.srcObject=stream;
+    await cam.play().catch(()=>{});
+    stage.classList.remove('noCam');
+  }catch(e){
+    // camera blocked or unavailable — that's fine, play without it
+    stage.classList.add('noCam');
+  }
+  camPrompt.classList.add('hide');
+  warmUpVoices();
+}
+document.getElementById('camOn').addEventListener('click',startCamera);
+document.getElementById('skipCam').addEventListener('click',()=>{
+  camPrompt.classList.add('hide');
+  warmUpVoices();
+});
+
+/* ---------- Text-to-speech ---------- */
+let voices=[];
+function loadVoices(){ voices=window.speechSynthesis?window.speechSynthesis.getVoices():[]; }
+function warmUpVoices(){
+  if(!('speechSynthesis' in window))return;
+  loadVoices();
+  // some browsers load voices async
+  window.speechSynthesis.onvoiceschanged=loadVoices;
+  // a tiny silent utterance unlocks TTS on iOS after a tap
+  try{const u=new SpeechSynthesisUtterance(' ');u.volume=0;window.speechSynthesis.speak(u);}catch(e){}
+}
+function pickVoice(kind){
+  if(!voices.length)loadVoices();
+  const en=voices.filter(v=>/^en/i.test(v.lang));
+  const pool=en.length?en:voices;
+  if(!pool.length)return null;
+  // Try to give cat a lighter/female-ish voice and dog a deeper one when names hint at it
+  const wantsDeep=/dog/.test(kind);
+  const deepNames=/(male|daniel|fred|alex|arthur|george|rishi)/i;
+  const brightNames=/(female|samantha|karen|victoria|tessa|moira|fiona|zira|aria)/i;
+  let match=pool.find(v=> wantsDeep?deepNames.test(v.name):brightNames.test(v.name));
+  return match||pool[0];
+}
+function speak(text,kind){
+  if(!('speechSynthesis' in window))return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  const v=pickVoice(kind);
+  if(v)u.voice=v;
+  if(kind==='dog'){u.pitch=0.55;u.rate=0.9;}   // deep, slow, goofy
+  else{u.pitch=1.7;u.rate=1.12;}                // high, quick, sassy
+  u.volume=1;
+  lastSpeak=()=>{window.speechSynthesis.cancel();window.speechSynthesis.speak(u);};
+  window.speechSynthesis.speak(u);
+}
+
+/* ---------- Main flow ---------- */
+function read(kind){
+  if(busy)return;
+  busy=true;
+  dogBtn.disabled=true;catBtn.disabled=true;
+  reveal.classList.remove('on');
+  hint.style.opacity=0;
+
+  // scanning animation
+  scan.classList.add('on');
+  scanText.textContent=pick(SCAN_LINES);
+  barFill.style.transition='none';barFill.style.width='0%';
+  // force reflow then animate
+  void barFill.offsetWidth;
+  const dur=1200+Math.random()*500;
+  barFill.style.transition=`width ${dur}ms ease-in-out`;
+  barFill.style.width='100%';
+  // swap scan line halfway for extra fun
+  const swap=setTimeout(()=>{scanText.textContent=pick(SCAN_LINES);},dur/2);
+
+  setTimeout(()=>{
+    clearTimeout(swap);
+    scan.classList.remove('on');
+    showResult(kind);
+  },dur);
+}
+
+function showResult(kind){
+  const isDog=kind==='dog';
+  const thought=isDog?dogBag():catBag();
+  const noise=isDog?pick(BARKS):pick(MEOWS);
+
+  bubble.classList.toggle('dog',isDog);
+  bubble.classList.toggle('cat',!isDog);
+  faceEl.textContent=isDog?pick(['🐶','🐕','🦮','🐩']):pick(['🐱','🐈','😺','😼']);
+  noiseEl.textContent=noise;
+  thoughtEl.textContent=thought;
+
+  reveal.classList.add('on');
+  count++;countEl.textContent=count+' read';
+
+  // speak: little noise first, then the thought, in the right voice
+  speak(noise+' … '+thought,kind);
+
+  busy=false;
+  dogBtn.disabled=false;catBtn.disabled=false;
+}
+
+dogBtn.addEventListener('click',()=>read('dog'));
+catBtn.addEventListener('click',()=>read('cat'));
+replayBtn.addEventListener('click',()=>{ if(lastSpeak)lastSpeak(); });
+// tapping anywhere on the reveal (not the speaker) hides hint; buttons drive next read
+reveal.addEventListener('click',e=>{ if(e.target.id==='again') reveal.classList.remove('on'); });
+
+// preload voices list early too
+if('speechSynthesis' in window){ loadVoices(); window.speechSynthesis.onvoiceschanged=loadVoices; }
+</script>
+</body>
+</html>
